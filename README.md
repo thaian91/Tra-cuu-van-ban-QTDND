@@ -4,12 +4,12 @@
 
 **Bản mẫu** gồm 4 văn bản lấy từ Ebook CHM “EBOOK_VANBAN_QTDND_202607”:
 
-| Văn bản | Có tóm tắt | Ghi chú |
-|---|---|---|
-| Thông tư 27/2024/TT-NHNN | ✔ | Quỹ bảo đảm an toàn hệ thống |
-| Thông tư 28/2025/TT-NHNN | ✔ | Sửa đổi TT 27/2024 |
-| Văn bản hợp nhất 58/VBHN-NHNN | – | Có dòng thời gian sửa đổi, chú thích cuối văn bản |
-| Thông tư 73/2025/TT-NHNN | ✔ | Thủ tục chấp thuận thay đổi |
+| Văn bản | Ghi chú |
+|---|---|
+| Thông tư 27/2024/TT-NHNN | Quỹ bảo đảm an toàn hệ thống |
+| Thông tư 28/2025/TT-NHNN | Sửa đổi TT 27/2024 |
+| Văn bản hợp nhất 58/VBHN-NHNN | Có dòng thời gian sửa đổi, chú thích cuối văn bản |
+| Thông tư 73/2025/TT-NHNN | Thủ tục chấp thuận thay đổi |
 
 ## Chạy
 
@@ -19,7 +19,7 @@ Mở `index.html` bằng trình duyệt (hoặc `npx http-server .`). Dữ liệ
 
 - Tìm kiếm toàn văn theo từng Điều, **không cần gõ dấu**, khớp theo đầu từ, tô sáng từ khóa.
 - Trang đọc: mục lục Chương/Mục/Điều có lọc, đánh dấu Điều đang đọc, sao chép liên kết từng Điều, chỉnh cỡ chữ, chế độ sáng/tối, in.
-- Tab Toàn văn / Tóm tắt / Lịch sử sửa đổi; chú thích cuối văn bản bấm xem ngay tại chỗ.
+- Tab Toàn văn / Lịch sử sửa đổi; chú thích cuối văn bản bấm xem ngay tại chỗ.
 - Hiển thị tốt trên điện thoại.
 
 ## Tạo lại dữ liệu từ file CHM

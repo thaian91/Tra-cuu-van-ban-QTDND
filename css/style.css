@@ -197,9 +197,6 @@ sup.fn button { border: 0; background: var(--accent-soft); color: var(--accent);
 .fnpop { position: absolute; z-index: 80; max-width: min(420px, calc(100vw - 24px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 12px 14px; font-size: 14px; line-height: 1.55; }
 .fnpop b { color: var(--accent); }
 
-/* Tóm tắt */
-.summary h3 { margin: 1.6em 0 .6em; font-size: 1.05em; color: var(--brand-ink); }
-.summary > p:first-child { font-weight: 600; font-size: 1.05em; }
 .disclaimer { font-size: 13px; color: var(--ink-2); background: var(--surface-2); border-radius: 10px; padding: 8px 12px; margin-bottom: 14px; }
 
 /* Dòng thời gian */

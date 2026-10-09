@@ -77,20 +77,8 @@
           chapter: c.title.split(" — ")[0], ft: fold(title), fx: fold(text) });
       });
     });
-    if (d.tom_tat) {
-      var cur = { label: "Tóm tắt", title: "Tổng quan", text: "" };
-      var flush = function () {
-        if (cur.text.trim()) INDEX.push({ doc: d, anchor: "tom-tat", label: cur.label, title: cur.title, text: cur.text,
-          chapter: "Tóm tắt", ft: fold(cur.title), fx: fold(cur.text) });
-      };
-      d.tom_tat.forEach(function (b) {
-        if (b[0] === "h") { flush(); cur = { label: "Tóm tắt", title: plain(b[1]), text: "" }; }
-        else cur.text += " " + plain(b[1]);
-      });
-      flush();
-    }
   });
-  var TOTAL_ARTICLES = INDEX.filter(function (x) { return x.anchor !== "tom-tat"; }).length;
+  var TOTAL_ARTICLES = INDEX.length;
 
   function search(q, docId) {
     var terms = fold(q).split(/\s+/).filter(Boolean);
@@ -109,7 +97,6 @@
       });
       if (it.ft.indexOf(phrase) >= 0) score += 12;
       if (it.fx.indexOf(phrase) >= 0) score += 6;
-      if (it.anchor === "tom-tat") score += 1;
       hits.push({ it: it, score: score });
     });
     hits.sort(function (a, b) { return b.score - a.score; });
@@ -191,7 +178,6 @@
       (d.ngay ? '<span>· ' + esc(d.ngay) + '</span>' : '') + '</div>' +
       '<h3>' + esc(fmtTitle(d.tieu_de)) + '</h3>' +
       '<div class="dmeta"><span class="tag line">' + esc(g.ten) + '</span>' +
-      (d.tom_tat ? '<span class="tag alt">Có tóm tắt</span>' : '') +
       (d.dong_thoi_gian.length ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div>' +
       '<span class="go">Đọc văn bản →</span></a>';
   }
@@ -292,10 +278,6 @@
     });
     return h;
   }
-  function renderSummary(d) {
-    return '<div class="disclaimer">Phần tóm tắt do người biên soạn Ebook cung cấp để đọc nhanh; khi áp dụng cần đối chiếu với toàn văn.</div>' +
-      '<div class="summary">' + d.tom_tat.map(function (b) { return block(b, {}); }).join("") + '</div>';
-  }
   function renderTimeline(d) {
     var items = d.dong_thoi_gian.map(function (t) {
       var so = t.so.replace(/^Thông tư số /, ""), target = DATA.docs.filter(function (x) { return x.so_hieu === so; })[0];
@@ -322,18 +304,17 @@
     return h;
   }
   function viewDoc(d, sub, q) {
-    var tab = sub === "tom-tat" && d.tom_tat ? "tom-tat" : sub === "lich-su" && d.dong_thoi_gian.length ? "lich-su" : "toan-van";
+    var tab = sub === "lich-su" && d.dong_thoi_gian.length ? "lich-su" : "toan-van";
     var anchor = tab === "toan-van" ? sub : "";
     if (state.docId === d.id && state.tab === tab && tab === "toan-van" && !q) { scrollToAnchor(anchor, true); return; }
     state.docId = d.id; state.tab = tab;
     var base = "#/vb/" + d.id, g = groupById(d.nhom);
     var tabs = '<nav class="tabs" aria-label="Chế độ xem"><a href="' + base + '"' + (tab === "toan-van" ? ' aria-current="page"' : '') + '>Toàn văn</a>' +
-      (d.tom_tat ? '<a href="' + base + '/tom-tat"' + (tab === "tom-tat" ? ' aria-current="page"' : '') + '>Tóm tắt</a>' : '') +
       (d.dong_thoi_gian.length ? '<a href="' + base + '/lich-su"' + (tab === "lich-su" ? ' aria-current="page"' : '') + '>Lịch sử sửa đổi</a>' : '') + '</nav>';
     var related = DATA.docs.filter(function (x) { return x.nhom === d.nhom && x.id !== d.id; });
     var tocHtml = renderToc(d, tab);
     if (related.length) tocHtml += '<div class="related"><h2>Cùng nhóm</h2>' + related.map(function (x) { return '<a href="#/vb/' + x.id + '">' + esc(docName(x)) + '</a>'; }).join("") + '</div>';
-    var body = tab === "toan-van" ? renderFull(d) : tab === "tom-tat" ? renderSummary(d) : renderTimeline(d);
+    var body = tab === "toan-van" ? renderFull(d) : renderTimeline(d);
     $app.innerHTML =
       '<div class="crumbs"><a href="#/">Trang chủ</a> › <a href="#/nhom/' + g.id + '">' + esc(g.ten) + '</a></div>' +
       '<section class="dochead"><span class="tag">' + esc(d.loai) + '</span><h1>' + esc(fmtTitle(d.tieu_de)) + '</h1><div class="facts">' +

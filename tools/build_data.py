@@ -8,16 +8,12 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 
 SRC, OUT = sys.argv[1], sys.argv[2]
 
-# Bản mẫu: id -> (tệp toàn văn, tệp tóm tắt, nhóm)
+# Bản mẫu: các văn bản đưa vào ứng dụng (tệp toàn văn trong CHM, nhóm, loại)
 SAMPLE = [
-    dict(id="27-2024-tt-nhnn", full="27_2024_TT-NHNN_Quy_Bao_dam_an_toan_he_thong_QTDND.htm",
-         summary="27_2024_TT-NHNN_TOM_TAT.htm", group="quy-bao-dam", kind="Thông tư"),
-    dict(id="28-2025-tt-nhnn", full="28_2025_TT-NHNN_Quy_bao_dam_An_toan_he_thong_QTDND_-_Sua_doi_TT_27_2024.htm",
-         summary="28_2025_TT-NHNN_TOM_TAT.htm", group="quy-bao-dam", kind="Thông tư"),
-    dict(id="58-2026-vbhn", full="58_2026_VBHN_Hop_nhat_Thong_tu_so_27_2024,_28_2025,_10_2026.htm",
-         summary=None, group="quy-bao-dam", kind="Văn bản hợp nhất"),
-    dict(id="73-2025-tt-nhnn", full="73_2025_TT-NHNN_Ho_so,_trinh_tu,_thu_tuc_chap_thuan_thay_doi_-_Thay_the_TT_28_2024.htm",
-         summary="73_2025_TT-NHNN_TOM_TAT.htm", group="chap-thuan", kind="Thông tư"),
+    dict(id="27-2024-tt-nhnn", full="27_2024_TT-NHNN_Quy_Bao_dam_an_toan_he_thong_QTDND.htm", group="quy-bao-dam", kind="Thông tư"),
+    dict(id="28-2025-tt-nhnn", full="28_2025_TT-NHNN_Quy_bao_dam_An_toan_he_thong_QTDND_-_Sua_doi_TT_27_2024.htm", group="quy-bao-dam", kind="Thông tư"),
+    dict(id="58-2026-vbhn", full="58_2026_VBHN_Hop_nhat_Thong_tu_so_27_2024,_28_2025,_10_2026.htm", group="quy-bao-dam", kind="Văn bản hợp nhất"),
+    dict(id="73-2025-tt-nhnn", full="73_2025_TT-NHNN_Ho_so,_trinh_tu,_thu_tuc_chap_thuan_thay_doi_-_Thay_the_TT_28_2024.htm", group="chap-thuan", kind="Thông tư"),
 ]
 
 # Tên nhóm theo mục lục help.hhc (đã viết có dấu); số mục đếm từ chính help.hhc.
@@ -240,16 +236,6 @@ def timeline(paras):
             out.append(dict(so=m.group(1), ngay=f(*m.group(2, 3, 4)), hieu_luc=f(*m.group(5, 6, 7)), mo_ta=p))
     return out
 
-def parse_summary(path):
-    s = BeautifulSoup(unicodedata.normalize("NFC", open(path, encoding="utf-8", errors="ignore").read()), "lxml")
-    c = s.find(id="winchm_template_content")
-    out = []
-    for b in blocks(c):
-        if b[0] == "h": out.append(["h", b[1], ""])
-        elif b[0] == "p": out.append(["p", b[1], ""])
-        else: out.append(["t", b[1], ""])
-    return out
-
 def read_hhc():
     """Đếm số văn bản (mục có Local) trong từng nhóm cấp 1 của help.hhc."""
     t = open(os.path.join(SRC, "help.hhc"), encoding="utf-8", errors="ignore").read()
@@ -272,7 +258,6 @@ if __name__ == "__main__":
         meta, ls, cc, chapters = parse_full(os.path.join(SRC, sp["full"]))
         d = dict(id=sp["id"], nhom=sp["group"], loai=sp["kind"], **meta, can_cu=cc, lich_su=ls, chuong=chapters)
         d["dong_thoi_gian"] = timeline(ls)
-        d["tom_tat"] = parse_summary(os.path.join(SRC, sp["summary"])) if sp["summary"] else None
         docs.append(d)
     groups = [dict(id=i, ten=ten, tong=counts.get(raw, 0)) for i, ten, raw in GROUPS]
     json.dump(dict(groups=groups, docs=docs), open(OUT + ".json", "w", encoding="utf-8"), ensure_ascii=False)
@@ -280,6 +265,6 @@ if __name__ == "__main__":
         f.write("window.APP_DATA=" + json.dumps(dict(groups=groups, docs=docs), ensure_ascii=False, separators=(",", ":")) + ";\n")
     for d in docs:
         print("\n==", d["id"], d.get("so_hieu"), d.get("ngay"), "|", d.get("loai"), "|", d.get("tieu_de")[:110])
-        print("  can_cu:", len(d["can_cu"]), " tom_tat:", len(d["tom_tat"]) if d["tom_tat"] else None)
+        print("  can_cu:", len(d["can_cu"]), "")
         for c in d["chuong"]:
             print("  ", c["id"], c["title"][:70], [a.get("so") or a.get("muc") for a in c["articles"]][:40])
