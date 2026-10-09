@@ -65,6 +65,9 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
 main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none; }
 .foot { max-width: 1280px; margin: 0 auto; padding: 18px 16px 40px; color: var(--ink-2); font-size: 13px; border-top: 1px solid var(--line); }
 
+.navlink { flex: none; text-decoration: none; color: var(--ink); font-weight: 600; font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.navlink:hover { background: var(--surface-2); }
+
 /* ---------- Trang chủ ---------- */
 .hero { position: relative; overflow: hidden; border-radius: 24px; padding: 44px 32px 40px; color: #fff; background: radial-gradient(1200px 400px at 90% -20%, rgba(251,191,36,.35), transparent 60%), radial-gradient(800px 400px at -10% 120%, rgba(45,212,191,.35), transparent 60%), linear-gradient(135deg, #0b4f4a, #0f766e 55%, #138a7f); box-shadow: var(--shadow-lg); }
 .hero h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 38px); line-height: 1.2; letter-spacing: -.3px; }
@@ -82,7 +85,9 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none
 
 .section-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 36px 0 14px; }
 .section-h h2 { margin: 0; font-size: 20px; letter-spacing: -.2px; }
-.section-h span { color: var(--ink-2); font-size: 14px; }
+.section-h span, .section-h a { color: var(--ink-2); font-size: 14px; }
+.section-h a { color: var(--brand-ink); font-weight: 600; text-decoration: none; }
+.intro { margin: 18px 0 0; font-size: 14px; }
 
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .gcard { display: flex; gap: 14px; align-items: flex-start; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: inherit; box-shadow: var(--shadow); transition: transform .15s, border-color .15s, box-shadow .15s; }
@@ -103,6 +108,25 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none
 .tag.line { background: transparent; border: 1px solid var(--line); color: var(--ink-2); font-weight: 500; }
 .dcard .go { margin-top: auto; color: var(--brand-ink); font-weight: 600; font-size: 14px; }
 
+.sub { margin: 0 0 14px; color: var(--ink-2); }
+.listtools { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+.listtools input, .listtools select { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 10px 14px; font: inherit; }
+.listtools input { flex: 1; min-width: 220px; max-width: 460px; }
+.listtools input:focus, .listtools select:focus { outline: none; border-color: var(--brand); }
+.rows { display: grid; gap: 10px; margin-top: 14px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: inherit; transition: border-color .15s, transform .15s; }
+.row:hover { border-color: var(--brand); transform: translateX(2px); }
+.row-main { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.row-t { font-weight: 600; line-height: 1.4; }
+.row-go { color: var(--brand); font-size: 24px; flex: none; }
+.subh { margin: 22px 0 -4px; font-size: 15px; color: var(--brand-ink); }
+.more { margin: 14px auto 0; display: flex; }
+.loading { display: flex; align-items: center; gap: 12px; padding: 40px 8px; color: var(--ink-2); }
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--brand); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.docsearch { flex: 1; max-width: 340px; }
+.docsearch input { padding: 7px 14px 7px 36px; font-size: 14px; }
+.docsearch svg { left: 12px; }
 .crumbs { font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
 .crumbs a { color: var(--ink-2); }
 .pagetitle { margin: 0 0 6px; font-size: 26px; letter-spacing: -.3px; }
@@ -223,6 +247,8 @@ sup.fn button { border: 0; background: var(--accent-soft); color: var(--accent);
 }
 @media (max-width: 640px) {
   .brand-text { font-size: 13px; }
+  .navlink { display: none; }
+  .docsearch { max-width: none; flex: 1 1 100%; order: 5; }
   .topbar-in { flex-wrap: wrap; gap: 10px; }
   .brand { flex: 1; }
   .search-top { order: 3; flex: 1 1 100%; max-width: none; }
