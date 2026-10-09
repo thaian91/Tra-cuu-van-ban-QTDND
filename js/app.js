@@ -109,6 +109,8 @@
     var terms = fold(q).split(/\s+/).filter(Boolean);
     if (!terms.length) return { terms: terms, hits: [], docs: [] };
     var phrase = terms.join(" "), hits = [];
+    // Người dùng gõ có dấu -> ưu tiên kết quả khớp đúng dấu
+    var rawLow = q.normalize("NFC").toLowerCase().trim().replace(/\s+/g, " "), rawTerms = rawLow.split(" "), marks = fold(rawLow) !== rawLow;
     INDEX.forEach(function (it) {
       if (opt.vb && it.d.id !== opt.vb) return;
       var hay = it.ft + " " + it.fx + " " + (it.d.so_hieu ? fold(it.d.so_hieu) : "");
@@ -119,6 +121,11 @@
         var n = 0, p = -1; while ((p = findWord(it.fx, t, p + 1)) >= 0 && n < 8) n++;
         score += n;
       });
+      if (marks) {
+        var lx = it.lx || (it.lx = it.title.toLowerCase() + " " + it.text.toLowerCase());
+        if (lx.indexOf(rawLow) >= 0) score += 30;
+        rawTerms.forEach(function (t) { if (lx.indexOf(t) >= 0) score += 6; });
+      }
       if (it.ft.indexOf(phrase) >= 0) score += 12;
       if (it.fx.indexOf(phrase) >= 0) score += 6;
       hits.push({ it: it, score: score });
@@ -198,7 +205,7 @@
   function docRow(d, showGroup) {
     return '<a class="row" href="#/vb/' + d.id + '"><div class="row-main"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
       (d.so_hieu ? '<b>' + esc(d.so_hieu) + '</b>' : '') + (d.ngay ? '<span>· ' + esc(d.ngay) + '</span>' : '') +
-      (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div>' +
+      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div>' +
       '<div class="row-t">' + esc(d.tieu_de) + '</div>' +
       (showGroup ? '<div class="dmeta"><span class="tag line">' + esc(groupById(d.nhom).ten) + '</span></div>' : '') +
       '</div><span class="row-go" aria-hidden="true">›</span></a>';
@@ -208,7 +215,7 @@
     return '<a class="dcard" href="#/vb/' + d.id + '"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
       (d.so_hieu ? '<b>' + esc(d.so_hieu) + '</b>' : '') + (d.ngay ? '<span>· ' + esc(d.ngay) + '</span>' : '') + '</div>' +
       '<h3>' + esc(d.tieu_de) + '</h3><div class="dmeta"><span class="tag line">' + esc(g.ten) + '</span>' +
-      (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div><span class="go">Đọc văn bản →</span></a>';
+      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div><span class="go">Đọc văn bản →</span></a>';
   }
 
   /* ---------- Trang chủ ---------- */
@@ -223,7 +230,7 @@
       '<div class="chips"><small>Thử tìm:</small>' +
       SUGGEST.map(function (s) { return '<a class="chip" href="#/tim?q=' + encodeURIComponent(s) + '">' + esc(s) + '</a>'; }).join("") + '</div>' +
       '<div class="stats"><div><b>' + CAT.docs.length + '</b>văn bản</div><div><b>' + CAT.groups.length + '</b>nhóm chủ đề</div>' +
-      '<div><b>' + totalArt.toLocaleString("vi-VN") + '</b>Điều có thể tra cứu</div></div></section>';
+      '<div><b>' + totalArt.toLocaleString("vi-VN") + '</b>Điều có thể tra cứu</div><div><b>' + CAT.docs.filter(function (d) { return d.tt; }).length + '</b>văn bản có tóm tắt</div></div></section>';
     if (CAT.gioi_thieu && CAT.gioi_thieu.length > 1)
       html += '<p class="note intro">' + esc(CAT.gioi_thieu.slice(1).join(" ")) + '</p>';
     html += '<div class="section-h"><h2>Nhóm chủ đề</h2><a href="#/van-ban">Xem tất cả ' + CAT.docs.length + ' văn bản →</a></div><div class="grid">' +
@@ -239,7 +246,7 @@
   function viewList(g, q) {
     var types = ["Luật", "Nghị định", "Thông tư", "Văn bản hợp nhất", "Quyết định", "Nội dung mới", "Hỏi đáp", "Hướng dẫn"];
     var base = g ? CAT.docs.filter(function (d) { return d.nhom === g.id; }) : CAT.docs;
-    var st = { t: q.get("loai") || "", s: q.get("xep") || "ebook", f: "" }, shown = PAGE * 100;
+    var st = { t: q.get("loai") || "", s: q.get("xep") || "ebook", f: "", tt: q.get("tt") === "1" }, shown = PAGE * 100;
     $app.innerHTML = '<div class="crumbs"><a href="#/">Trang chủ</a> › ' + (g ? esc(g.ten) : "Tất cả văn bản") + '</div>' +
       '<h1 class="pagetitle">' + (g ? esc(g.ten) : "Tất cả văn bản") + '</h1><p class="sub" id="lcount"></p>' +
       '<div class="listtools"><input type="search" id="lf" placeholder="Lọc theo tên hoặc số hiệu…" aria-label="Lọc danh sách">' +
@@ -250,15 +257,16 @@
     function draw() {
       var terms = fold(st.f).split(/\s+/).filter(Boolean);
       var list = base.filter(function (d) {
-        return (!st.t || d.loai === st.t) && terms.every(function (t) { return findWord(d.f, t) >= 0; });
+        return (!st.t || d.loai === st.t) && (!st.tt || d.tt) && terms.every(function (t) { return findWord(d.f, t) >= 0; });
       });
       if (st.s === "moi") list = list.slice().sort(function (a, b) { return (dateKey(b.ngay) || "0") < (dateKey(a.ngay) || "0") ? -1 : 1; });
       if (st.s === "so") list = list.slice().sort(function (a, b) { return (a.so_hieu || "~").localeCompare(b.so_hieu || "~", "vi", { numeric: true }); });
       var present = types.filter(function (t) { return base.some(function (d) { return d.loai === t; }); });
-      document.getElementById("lt").innerHTML = present.length > 1 ?
-        '<button type="button" aria-pressed="' + !st.t + '" data-t="">Tất cả (' + base.length + ')</button>' + present.map(function (t) {
+      var nTT = base.filter(function (d) { return d.tt; }).length;
+      document.getElementById("lt").innerHTML = (nTT ? '<button type="button" aria-pressed="' + st.tt + '" data-tt="1">★ Có tóm tắt (' + nTT + ')</button>' : '') + (present.length > 1 ?
+        '<button type="button" aria-pressed="' + (!st.t && !st.tt) + '" data-t="">Tất cả (' + base.length + ')</button>' + present.map(function (t) {
           return '<button type="button" aria-pressed="' + (st.t === t) + '" data-t="' + esc(t) + '">' + esc(t) + ' (' + base.filter(function (d) { return d.loai === t; }).length + ')</button>';
-        }).join("") : "";
+        }).join("") : "");
       document.getElementById("lcount").textContent = list.length + " văn bản";
       var h = "", lastSub = null;
       list.slice(0, shown).forEach(function (d) {
@@ -269,7 +277,11 @@
     }
     lf.addEventListener("input", function () { st.f = lf.value; draw(); });
     ls.addEventListener("change", function () { st.s = ls.value; draw(); });
-    document.getElementById("lt").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) { st.t = b.getAttribute("data-t"); draw(); } });
+    document.getElementById("lt").addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.hasAttribute("data-tt")) st.tt = !st.tt; else { st.t = b.getAttribute("data-t"); if (!st.t) st.tt = false; }
+      draw();
+    });
     draw();
     document.title = (g ? g.ten : "Tất cả văn bản") + " — Tra cứu văn bản QTDND";
   }
@@ -349,6 +361,10 @@
     });
     return h || '<p>Văn bản này chưa có nội dung.</p>';
   }
+  function renderSummary(d) {
+    return '<div class="disclaimer">Phần tóm tắt do người biên soạn Ebook cung cấp để đọc nhanh; khi áp dụng cần đối chiếu với toàn văn.</div>' +
+      '<div class="summary">' + d.tom_tat.map(function (b) { return block(b, {}); }).join("") + '</div>';
+  }
   function renderTimeline(d) {
     var items = d.dong_thoi_gian.map(function (t) {
       var so = t.so.replace(/^(Thông tư|Nghị định|Quyết định|Luật)( liên tịch)? số /, ""),
@@ -375,7 +391,8 @@
     return h.indexOf("<details") < 0 ? "" : h + '<div class="none" id="tocNone" hidden>Không có mục phù hợp.</div>';
   }
   function viewDoc(meta, sub, q, token) {
-    var tab = sub === "lich-su" && meta.ls ? "lich-su" : "toan-van", anchor = tab === "toan-van" ? sub : "";
+    var tab = sub === "lich-su" && meta.ls ? "lich-su" : (meta.tt && (sub === "tom-tat" || sub === "")) ? "tom-tat" : "toan-van";
+    var anchor = tab === "toan-van" && sub !== "toan-van" ? sub : "";
     if (state.doc && state.doc.id === meta.id && state.tab === tab && tab === "toan-van" && !q) { scrollToAnchor(anchor, true); return; }
     $app.innerHTML = '<div class="crumbs"><a href="#/">Trang chủ</a> › ' + esc(groupById(meta.nhom).ten) + '</div><div class="loading"><div class="spinner"></div>Đang mở văn bản…</div>';
     window.scrollTo(0, 0);
@@ -387,13 +404,15 @@
   function renderDoc(meta, d, tab, anchor, q) {
     state.doc = d; state.tab = tab;
     var base = "#/vb/" + meta.id, g = groupById(meta.nhom);
-    var tabs = '<nav class="tabs" aria-label="Chế độ xem"><a href="' + base + '"' + (tab === "toan-van" ? ' aria-current="page"' : '') + '>Toàn văn</a>' +
+    var tabs = '<nav class="tabs" aria-label="Chế độ xem">' +
+      (meta.tt ? '<a href="' + base + '/tom-tat"' + (tab === "tom-tat" ? ' aria-current="page"' : '') + '>Tóm tắt</a>' : '') +
+      '<a href="' + base + '/toan-van"' + (tab === "toan-van" ? ' aria-current="page"' : '') + '>Toàn văn</a>' +
       (meta.ls ? '<a href="' + base + '/lich-su"' + (tab === "lich-su" ? ' aria-current="page"' : '') + '>Lịch sử sửa đổi</a>' : '') + '</nav>';
     var related = CAT.docs.filter(function (x) { return x.nhom === meta.nhom && x.id !== meta.id; });
     var tocHtml = renderToc(d, tab);
     if (related.length) tocHtml += '<div class="related"><h2>Cùng nhóm</h2>' + related.slice(0, 8).map(function (x) { return '<a href="#/vb/' + x.id + '" title="' + esc(x.tieu_de) + '">' + esc(docName(x)) + '</a>'; }).join("") +
       (related.length > 8 ? '<a href="#/nhom/' + g.id + '"><b>Xem cả nhóm (' + (related.length + 1) + ') →</b></a>' : '') + '</div>';
-    var body = tab === "toan-van" ? renderFull(d) : renderTimeline(d);
+    var body = tab === "toan-van" ? renderFull(d) : tab === "tom-tat" ? renderSummary(d) : renderTimeline(d);
     $app.innerHTML =
       '<div class="crumbs"><a href="#/">Trang chủ</a> › <a href="#/nhom/' + g.id + '">' + esc(g.ten) + '</a>' + (meta.nhom_con ? ' › ' + esc(meta.nhom_con) : '') + '</div>' +
       '<section class="dochead"><span class="tag">' + esc(meta.loai) + '</span><h1>' + esc(meta.tieu_de) + '</h1><div class="facts">' +

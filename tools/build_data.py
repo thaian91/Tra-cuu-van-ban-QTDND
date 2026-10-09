@@ -7,7 +7,7 @@ Dùng:  python3 -I tools/build_data.py <thư_mục_giải_nén_CHM> <thư_mục_
   data/catalog.js        danh mục nhóm + văn bản (tải ngay khi mở app)
   data/search.js         chỉ mục tìm kiếm theo từng Điều (tải khi tìm lần đầu)
   data/docs/<id>.js      nội dung từng văn bản (tải khi mở văn bản đó)
-Nguồn danh mục là help.hhc của CHM. Trang "TÓM TẮT" bị bỏ theo yêu cầu.
+Nguồn danh mục là help.hhc của CHM. Trang "TÓM TẮT" được gắn vào văn bản gốc có cùng số hiệu (tab Tóm tắt).
 """
 import json, re, sys, html, os, unicodedata
 from bs4 import BeautifulSoup, NavigableString, Tag
@@ -311,6 +311,16 @@ def parse_full(path, flat_title=None):
         if m: meta["so_hieu"] = m.group(1)
     return meta, lich_su, [x for x in can_cu if x], chapters
 
+def parse_summary(path):
+    """Trang tóm tắt do người biên soạn Ebook viết: tiêu đề, đoạn văn và bảng."""
+    out = []
+    for b in blocks(load(path).find(id="winchm_template_content")):
+        if b[0] == "h": out.append(["h", tidy(b[1]), ""])
+        elif b[0] == "p":
+            if strip(b[1]): out.append(["p", tidy(b[1]), ""])
+        else: out.append(["t", b[1], ""])
+    return out
+
 DOC_RE = r"(?:Thông tư(?: liên tịch)?|Nghị định|Quyết định|Luật|Pháp lệnh)"
 def timeline(paras):
     out = []
@@ -370,13 +380,20 @@ if __name__ == "__main__":
     group_by_raw = {raw: gid for gid, _, raw in GROUPS}
     ents = read_hhc()
     used, docs, search, problems, intro = set(), [], [], [], []
+    summaries, bases = {}, {}      # base id -> đường dẫn trang tóm tắt
+    def base_id(name):
+        tok = name.split()[0]
+        return slug(tok) if re.match(r"^\d+[_-]", tok) else slug(name)
+    for e in ents:
+        if e["d"] >= 2 and re.search(r"tom\s*tat", e["name"], re.I) and os.path.exists(os.path.join(SRC, e["local"])):
+            summaries[base_id(e["name"])] = os.path.join(SRC, e["local"])
     for e in ents:
         if e["d"] == 1:
             if e["name"] == "Intro":
                 intro = [strip(b[1]) for b in blocks(load(os.path.join(SRC, e["local"])).find(id="winchm_template_content")) if b[0] == "p"]
             continue
         if re.search(r"tom\s*tat", e["name"], re.I):
-            continue   # bỏ phần tóm tắt theo yêu cầu
+            continue   # trang tóm tắt được gắn vào văn bản gốc bên dưới
         path = os.path.join(SRC, e["local"])
         if not os.path.exists(path):
             problems.append(f"Không có tệp trong CHM: {e['name']}"); continue
@@ -414,8 +431,19 @@ if __name__ == "__main__":
         doc = dict(id=did, nhom=gid, nhom_con=SUBGROUPS.get(e["sub"]) if e["sub"] else None, loai=loai,
                    so_hieu=meta.get("so_hieu"), ngay=meta.get("ngay"), tieu_de=meta["tieu_de"],
                    can_cu=cc, lich_su=ls, dong_thoi_gian=timeline(ls), chuong=chapters, chu_thich=meta["chu_thich"])
+        sp = summaries.pop(base_id(e["name"]), None)
+        if sp: doc["tom_tat"] = parse_summary(sp)
         docs.append(doc)
         idx = len(docs) - 1
+        if sp:
+            cur_t, cur_x = "Tổng quan", []
+            def flush_sum():
+                text = " ".join(plain_text(x[1]) for x in cur_x)
+                if text.strip(): search.append([idx, "tom-tat", "Tóm tắt", cur_t, text, "Tóm tắt"])
+            for b in doc["tom_tat"]:
+                if b[0] == "h": flush_sum(); cur_t, cur_x = plain_text(b[1]), []
+                else: cur_x.append(b)
+            flush_sum()
         for ch in chapters:
             for a in ch["articles"]:
                 text = " ".join(plain_text(b[1]) for b in a["nd"])
@@ -433,9 +461,11 @@ if __name__ == "__main__":
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"])) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat"))) for d in docs],
         gioi_thieu=intro)
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")
     print(f"\nTổng: {len(docs)} văn bản, {len(search)} mục tìm kiếm")
+    for left in summaries: problems.append(f"Trang tóm tắt không khớp văn bản nào: {left}")
+    print(f"Có tóm tắt: {sum(1 for d in docs if d.get('tom_tat'))} văn bản")
     for p in problems: print("LƯU Ý:", p)
