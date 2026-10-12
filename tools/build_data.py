@@ -33,6 +33,9 @@ GROUPS = [
     ("hoi-dap", "Nội dung mới – Hỏi đáp", "Cac noi dung MOI - HOI DAP"),
     ("khac", "Văn bản khác", "Van ban KHAC"),
 ]
+# Dòng giới thiệu ở trang chủ (thay cho đoạn giới thiệu gốc của Ebook theo yêu cầu).
+INTRO_TEXT = "Cập nhật đến tháng 08/2026"
+
 EXTRA_DOCS = [
     dict(file="40_2026_TT-NHNN.docx", top="Cac gioi han, ty le bao dam an toan hoat dong QTDND",
          name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
@@ -551,7 +554,7 @@ if __name__ == "__main__":
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
                    n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat"))) for d in docs],
-        gioi_thieu=intro)
+        gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")
     print(f"\nTổng: {len(docs)} văn bản, {len(search)} mục tìm kiếm")
