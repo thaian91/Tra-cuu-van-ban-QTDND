@@ -2,6 +2,7 @@
 """Chuyển toàn bộ văn bản trong file CHM (đã giải nén) thành dữ liệu cho ứng dụng tra cứu.
 
 Dùng:  python3 -I tools/build_data.py <thư_mục_giải_nén_CHM> <thư_mục_data_đầu_ra>
+Cần: pip install beautifulsoup4 lxml python-docx
 
 Đầu ra:
   data/catalog.js        danh mục nhóm + văn bản (tải ngay khi mở app)
@@ -31,6 +32,10 @@ GROUPS = [
     ("kho-quy", "Hoạt động an toàn kho quỹ", "Hoat dong An toan kho quy"),
     ("hoi-dap", "Nội dung mới – Hỏi đáp", "Cac noi dung MOI - HOI DAP"),
     ("khac", "Văn bản khác", "Van ban KHAC"),
+]
+EXTRA_DOCS = [
+    dict(file="40_2026_TT-NHNN.docx", top="Cac gioi han, ty le bao dam an toan hoat dong QTDND",
+         name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
 ]
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
@@ -150,6 +155,83 @@ def sentence_case(t):
     s = re.sub(r"\b(thông tư|nghị định|quyết định)\b(?= số)", lambda m: m.group(1).capitalize(), s)
     return s[:1].upper() + s[1:]
 
+# ---------------------------------------------------------------- văn bản bổ sung từ tệp Word (.docx)
+def docx_blocks(path):
+    """Đọc tệp .docx thành cùng dạng khối như blocks(): ('p', html) và ('t', html)."""
+    import docx
+    from docx.oxml.ns import qn
+    from docx.text.paragraph import Paragraph
+    d = docx.Document(path)
+
+    def para_html(pel):
+        parts = []
+        for r in Paragraph(pel, None).runs:
+            t = r.text.replace("\xa0", " ").replace("\n", " ").replace("\t", " ")
+            if not t: continue
+            h = html.escape(t, quote=False)
+            if r.bold and h.strip(): h = f"<b>{h}</b>"
+            elif r.italic and h.strip(): h = f"<i>{h}</i>"
+            parts.append(h)
+        s = "".join(parts)
+        s = re.sub(r"</b><b>|</i><i>", "", s)       # các đoạn chạy (run) liền nhau cùng định dạng
+        return re.sub(r"\s+", " ", s).strip()
+
+    def cell_text(tc):
+        return "<br>".join(x for x in (para_html(p) for p in tc.findall(qn("w:p"))) if x)
+
+    def table_block(tbl):
+        rows = tbl.findall(qn("w:tr"))
+        grid = []                                       # mỗi dòng: [(cột bắt đầu, độ rộng, vMerge, tc)]
+        for tr in rows:
+            col, cells = 0, []
+            for tc in tr.findall(qn("w:tc")):
+                pr = tc.find(qn("w:tcPr")); span, vm = 1, None
+                if pr is not None:
+                    g = pr.find(qn("w:gridSpan")); v = pr.find(qn("w:vMerge"))
+                    if g is not None: span = int(g.get(qn("w:val")))
+                    if v is not None: vm = v.get(qn("w:val")) or "continue"
+                cells.append((col, span, vm, tc)); col += span
+            grid.append(cells)
+        # công thức dạng phân số: 2 dòng, dòng đầu có ô "="
+        if len(rows) == 2:
+            r0 = [cell_text(c[3]) for c in grid[0]]; r1 = [cell_text(c[3]) for c in grid[1]]
+            if "=" in [x.strip() for x in r0] and len(r0) == len(r1):
+                e = [x.strip() for x in r0].index("=")
+                if 0 < e < len(r0) - 1:
+                    suffix = r0[e + 2] if e + 2 < len(r0) else ""
+                    return ("p", f'<span class="lb">{r0[e-1]} =</span><span class="fr"><span class="nu">{r0[e+1]}</span><span class="de">{r1[e+1]}</span></span><span class="sf">{suffix}</span>', "f")
+        out = []
+        for ri, cells in enumerate(grid):
+            tds = []
+            for col, span, vm, tc in cells:
+                if vm == "continue": continue
+                rs = 1
+                if vm == "restart":
+                    for nxt in grid[ri + 1:]:
+                        m = [c for c in nxt if c[0] == col and c[2] == "continue"]
+                        if not m: break
+                        rs += 1
+                attrs = (f' colspan="{span}"' if span > 1 else "") + (f' rowspan="{rs}"' if rs > 1 else "")
+                tds.append(f"<td{attrs}>{cell_text(tc)}</td>")
+            if tds: out.append("<tr>" + "".join(tds) + "</tr>")
+        return ("t", "<table>" + "".join(out) + "</table>")
+
+    res, seen_text = [], False
+    for el in d.element.body.iterchildren():
+        if el.tag == qn("w:p"):
+            h = para_html(el)
+            if h: res.append(("p", h)); seen_text = True
+        elif el.tag == qn("w:tbl"):
+            rows = el.findall(qn("w:tr"))
+            if len(rows) <= 1 or not seen_text:      # bảng dàn trang (quốc hiệu, nơi nhận...)
+                for tc in el.iter(qn("w:tc")):
+                    for p in tc.findall(qn("w:p")):
+                        h = para_html(p)
+                        if h: res.append(("p", h)); seen_text = True
+            else:
+                res.append(table_block(el))
+    return res
+
 # ---------------------------------------------------------------- phân tích một văn bản
 REF = re.compile(r"\[(\d+)\]")
 HEAD_CHUONG = re.compile(r"^(Chương|CHƯƠNG)\s+[IVXLC\d]+\s*(?:[.:–-]\s*\S.*)?$")
@@ -165,7 +247,9 @@ def load(path):
 
 def parse_full(path, flat_title=None):
     c = load(path).find(id="winchm_template_content")
-    bl = blocks(c)
+    return parse_blocks(blocks(c), flat_title)
+
+def parse_blocks(bl, flat_title=None):
     # chú thích cuối văn bản: khối "[1]..." cuối cùng, mỗi mục bắt đầu bằng "[n]"
     notes = {}
     ks = [i for i, b in enumerate(bl) if b[0] == "p" and re.match(r"^\[1\]", strip(b[1]))]
@@ -259,7 +343,7 @@ def parse_full(path, flat_title=None):
                 cur["ch"]["title"] = tidy(cur["ch"]["title"] + " — " + plain); cur["ch"]["_n"] = cur["ch"].get("_n", 0) + 1; continue
             if not plain and kind != "t": continue
             cur["mode"] = None
-            push(["p", tidy(h), para_class(plain)]); continue
+            push(["p", tidy(h), "f" if (kind == "p" and len(b) > 2 and b[2] == "f") else para_class(plain)]); continue
         short = len(plain) < 200
         if (is_h or short) and HEAD_CHUONG.match(plain): new_chapter(plain.replace(" – ", " — ", 1)); continue
         if (is_h and HEAD_PL.match(plain)) or (short and PL_NUM.match(plain)):
@@ -286,7 +370,7 @@ def parse_full(path, flat_title=None):
         if kind == "h":
             push(["p", f"<b>{html.escape(plain, quote=False)}</b>", ""])
         else:
-            push(["p", tidy(h), para_class(plain)])
+            push(["p", tidy(h), "f" if (kind == "p" and len(b) > 2 and b[2] == "f") else para_class(plain)])
     for ch in chapters:
         ch.pop("_n", None)
         ch["title"] = re.sub(r"\b0 (\d)\b", r"0\1", ch["title"])
@@ -381,6 +465,11 @@ if __name__ == "__main__":
     ents = read_hhc()
     used, docs, search, problems, intro = set(), [], [], [], []
     summaries, bases = {}, {}      # base id -> đường dẫn trang tóm tắt
+    # Văn bản bổ sung ngoài Ebook (tệp Word do người dùng cung cấp), xếp đầu nhóm.
+    here = os.path.dirname(os.path.abspath(__file__))
+    for x in EXTRA_DOCS:
+        pos = next((i for i, e in enumerate(ents) if e.get("top") == x["top"]), len(ents))
+        ents.insert(pos, dict(d=2, name=x["name"], local=None, top=x["top"], sub=None, docx=os.path.join(here, "sources", x["file"])))
     def base_id(name):
         tok = name.split()[0]
         return slug(tok) if re.match(r"^\d+[_-]", tok) else slug(name)
@@ -394,7 +483,7 @@ if __name__ == "__main__":
             continue
         if re.search(r"tom\s*tat", e["name"], re.I):
             continue   # trang tóm tắt được gắn vào văn bản gốc bên dưới
-        path = os.path.join(SRC, e["local"])
+        path = e["docx"] if e.get("docx") else os.path.join(SRC, e["local"])
         if not os.path.exists(path):
             problems.append(f"Không có tệp trong CHM: {e['name']}"); continue
         gid = group_by_raw.get(e["top"])
@@ -404,7 +493,7 @@ if __name__ == "__main__":
             ps = [strip(b[1]) for b in blocks(load(path).find(id="winchm_template_content")) if b[0] == "p"]
             first = next((x for x in ps if len(x) >= 15 and not x.startswith("(")), e["name"])
             flat_title = sentence_case(tidy(first))
-        meta, ls, cc, chapters = parse_full(path, flat_title)
+        meta, ls, cc, chapters = parse_blocks(docx_blocks(path), flat_title) if e.get("docx") else parse_full(path, flat_title)
         loai = meta.get("loai_goc", "")
         if gid == "hoi-dap":
             n = e["name"]

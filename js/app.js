@@ -1,4 +1,4 @@
-/* Phần mềm tra cứu văn bản điện tử QTDND — ứng dụng tĩnh, không cần máy chủ.
+/* Phần mềm tra cứu văn bản điện tử QTDND Lộc Sơn — ứng dụng tĩnh, không cần máy chủ.
  * Dữ liệu: data/catalog.js (nạp ngay), data/docs/<id>.js (nạp khi mở văn bản), data/search.js (nạp khi tìm). */
 (function () {
   "use strict";
@@ -191,7 +191,7 @@
     else if (p[0] === "van-ban") viewList(null, r.q);
     else if (p[0] === "tim") viewSearch(r.q.get("q") || "", r.q.get("nhom") || "", r.q.get("vb") || "", token);
     else viewHome();
-    document.title = "Phần mềm tra cứu văn bản điện tử QTDND";
+    document.title = "Phần mềm tra cứu văn bản điện tử QTDND Lộc Sơn";
     window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", route);
@@ -338,7 +338,7 @@
   function block(b, notes) {
     if (b[0] === "t") return '<div class="table-wrap">' + b[1] + '</div>';
     if (b[0] === "h") return '<h3>' + esc(plain(b[1])) + '</h3>';
-    var cls = b[2] === "k" ? "khoan" : b[2] === "d" ? "diem" : b[2] === "g" ? "g" : "";
+    var cls = { k: "khoan", d: "diem", g: "g", f: "cthuc" }[b[2]] || "";
     return '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + withFn(b[1], notes) + '</p>';
   }
   var COPY_BTN = function (id) { return '<button class="copy" type="button" data-copy="' + id + '" title="Sao chép liên kết tới mục này">Sao chép liên kết</button>'; };

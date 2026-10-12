@@ -190,6 +190,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none
 .paper p.khoan { }
 .paper p.diem { padding-left: 1.4em; }
 .paper p.g { padding-left: 1.4em; }
+.paper p.cthuc { display: flex; flex-wrap: wrap; align-items: center; gap: .5em .7em; text-align: left; margin: .9em 0 1.1em; padding: .7em 1em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+.cthuc .lb { font-weight: 600; }
+.cthuc .fr { display: inline-flex; flex-direction: column; align-items: stretch; text-align: center; }
+.cthuc .nu { padding: 0 .6em .2em; border-bottom: 2px solid currentColor; }
+.cthuc .de { padding: .2em .6em 0; }
 .chuong-t { margin: 2.2em 0 .8em; padding: 14px 18px; border-radius: 14px; background: linear-gradient(135deg, var(--brand-soft), transparent); border-left: 5px solid var(--brand); font-size: 1.12em; line-height: 1.4; }
 .chuong-t small { display: block; color: var(--brand-ink); text-transform: uppercase; letter-spacing: 1px; font-size: .68em; margin-bottom: 2px; }
 .chuong:first-of-type .chuong-t { margin-top: .4em; }
