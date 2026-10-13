@@ -152,6 +152,13 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none
 .facts b { color: var(--ink); }
 
 .callout { display: grid; gap: 2px; margin-top: 14px; padding: 14px 18px; border-radius: var(--radius); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); color: var(--ink); text-decoration: none; }
+.callout.warn { background: color-mix(in srgb, #dc2626 10%, var(--surface)); border-color: color-mix(in srgb, #dc2626 45%, transparent); }
+.callout.warn .go { color: #b91c1c; }
+:root[data-theme="dark"] .callout.warn .go { color: #fca5a5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.warn .go { color: #fca5a5; } }
+.tag.warn { background: color-mix(in srgb, #dc2626 14%, transparent); color: #b91c1c; }
+:root[data-theme="dark"] .tag.warn { color: #fca5a5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.warn { color: #fca5a5; } }
 .callout:hover { border-color: var(--accent); }
 .callout span { color: var(--ink-2); font-size: 14px; }
 .callout .go { color: var(--accent); font-weight: 700; margin-top: 4px; }

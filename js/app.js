@@ -202,10 +202,14 @@
       '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>' +
       '<input id="' + id + '" type="search" value="' + esc(val || "") + '" placeholder="' + esc(ph) + '" aria-label="Tìm kiếm"></form>';
   }
+  function tbTag(d) {
+    var t = d.tb && catDoc(d.tb);
+    return t ? '<span class="tag warn">Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "";
+  }
   function docRow(d, showGroup) {
     return '<a class="row" href="#/vb/' + d.id + '"><div class="row-main"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
       (d.so_hieu ? '<b>' + esc(d.so_hieu) + '</b>' : '') + (d.ngay ? '<span>· ' + esc(d.ngay) + '</span>' : '') +
-      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + (d.hn ? '<span class="tag alt">Có văn bản hợp nhất mới</span>' : '') + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div>' +
+      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + (d.hn ? '<span class="tag alt">Có văn bản hợp nhất mới</span>' : '') + tbTag(d) + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div>' +
       '<div class="row-t">' + esc(d.tieu_de) + '</div>' +
       (showGroup ? '<div class="dmeta"><span class="tag line">' + esc(groupById(d.nhom).ten) + '</span></div>' : '') +
       '</div><span class="row-go" aria-hidden="true">›</span></a>';
@@ -215,7 +219,7 @@
     return '<a class="dcard" href="#/vb/' + d.id + '"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
       (d.so_hieu ? '<b>' + esc(d.so_hieu) + '</b>' : '') + (d.ngay ? '<span>· ' + esc(d.ngay) + '</span>' : '') + '</div>' +
       '<h3>' + esc(d.tieu_de) + '</h3><div class="dmeta"><span class="tag line">' + esc(g.ten) + '</span>' +
-      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div><span class="go">Đọc văn bản →</span></a>';
+      (d.tt ? '<span class="tag alt">Có tóm tắt</span>' : '') + tbTag(d) + (d.ls ? '<span class="tag alt">Lịch sử sửa đổi</span>' : '') + '</div><span class="go">Đọc văn bản →</span></a>';
   }
 
   /* ---------- Trang chủ ---------- */
@@ -401,11 +405,17 @@
       renderDoc(meta, d, tab, anchor, q);
     }, function (e) { errorView(e.message); });
   }
+  function tbNote(meta) {
+    var t = meta.tb && catDoc(meta.tb);
+    if (!t) return "";
+    return '<a class="callout warn" href="#/vb/' + t.id + '"><b>Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</b><span>' + esc(docName(t)) + (t.ngay ? ' · ' + esc(t.ngay) : '') +
+      ' — văn bản này đã được thay thế, nên đọc văn bản mới</span><span class="go">Xem ' + esc(t.so_hieu || "văn bản thay thế") + ' →</span></a>';
+  }
   function hnNote(meta) {
     var h = meta.hn && catDoc(meta.hn);
     if (!h) return "";
     return '<a class="callout" href="#/vb/' + h.id + '"><b>Đã có văn bản hợp nhất mới nhất</b><span>' + esc(docName(h)) + (h.ngay ? ' · ' + esc(h.ngay) : '') +
-      ' — hợp nhất Thông tư này cùng các thông tư sửa đổi, bổ sung</span><span class="go">Xem văn bản hợp nhất →</span></a>';
+      ' — hợp nhất nội dung Thông tư này với các thông tư liên quan</span><span class="go">Xem văn bản hợp nhất →</span></a>';
   }
   function renderDoc(meta, d, tab, anchor, q) {
     state.doc = d; state.tab = tab;
@@ -423,7 +433,7 @@
       '<div class="crumbs"><a href="#/">Trang chủ</a> › <a href="#/nhom/' + g.id + '">' + esc(g.ten) + '</a>' + (meta.nhom_con ? ' › ' + esc(meta.nhom_con) : '') + '</div>' +
       '<section class="dochead"><span class="tag">' + esc(meta.loai) + '</span><h1>' + esc(meta.tieu_de) + '</h1><div class="facts">' +
       (meta.so_hieu ? '<span>Số hiệu: <b>' + esc(meta.so_hieu) + '</b></span>' : '') + (meta.ngay ? '<span>Ngày ban hành: <b>' + esc(meta.ngay) + '</b></span>' : '') +
-      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + hnNote(meta) + tabs +
+      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + tbNote(meta) + hnNote(meta) + tabs +
       '<div class="layout"><aside class="toc" id="toc" aria-label="Mục lục">' + tocHtml + '</aside><div class="reader">' +
       '<div class="toolbar">' + (tab === "toan-van" ? '<button class="btn toc-btn" id="tocOpen" type="button">☰ Mục lục</button>' : '') +
       '<form class="search docsearch" id="docSearch" autocomplete="off"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="docQ" placeholder="Tìm trong văn bản này…" aria-label="Tìm trong văn bản này"></form>' +
