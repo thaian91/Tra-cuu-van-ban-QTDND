@@ -48,7 +48,7 @@ HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-n
 # Văn bản được thay thế bởi văn bản khác: id bị thay thế -> id văn bản thay thế (theo xác nhận của người dùng)
 # Văn bản đã hết hiệu lực (theo xác nhận của người dùng)
 HET_HIEU_LUC = ["493-2005-qd-nhnn", "18-2007-qd-nhnn"]
-THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn"}
+THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn"}
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
     "Lai suat rut truoc han tien gui tai TCTD": "Lãi suất rút trước hạn tiền gửi tại TCTD",
