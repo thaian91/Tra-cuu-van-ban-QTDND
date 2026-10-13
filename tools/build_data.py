@@ -46,6 +46,8 @@ EXTRA_DOCS = [
 # Văn bản hợp nhất mới nhất của một văn bản gốc: id VBHN -> [id văn bản gốc được gắn thông báo]
 HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-nhnn"]}
 # Văn bản được thay thế bởi văn bản khác: id bị thay thế -> id văn bản thay thế (theo xác nhận của người dùng)
+# Văn bản đã hết hiệu lực (theo xác nhận của người dùng)
+HET_HIEU_LUC = ["493-2005-qd-nhnn", "18-2007-qd-nhnn"]
 THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn"}
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
@@ -573,10 +575,13 @@ if __name__ == "__main__":
     for old_id, new_id in THAY_THE.items():
         if old_id in by_id and new_id in by_id: by_id[old_id]["tb"] = new_id
         else: problems.append(f"THAY_THE: không tìm thấy {old_id} hoặc {new_id}")
+    for hid in HET_HIEU_LUC:
+        if hid in by_id: by_id[hid]["hl"] = True
+        else: problems.append(f"HET_HIEU_LUC: không tìm thấy {hid}")
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb")) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl"))) for d in docs],
         gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")

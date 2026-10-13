@@ -43,7 +43,7 @@ Script đọc danh mục từ `help.hhc` (và các tệp .docx khai báo trong `
 
 ## Lưu ý về dữ liệu
 
-- Chưa gắn nhãn hiệu lực văn bản; sẽ bổ sung khi có danh sách văn bản hết hiệu lực.
+- Nhãn hiệu lực chỉ gắn theo xác nhận của người dùng: “Đã hết hiệu lực” cho QĐ 493/2005/QĐ-NHNN và 18/2007/QĐ-NHNN (khai báo `HET_HIEU_LUC` trong `tools/build_data.py`); các văn bản khác chưa gắn nhãn hiệu lực.
 - Ngày ban hành chỉ hiển thị khi nội dung văn bản có ghi; không tự suy đoán.
 - Mục `64_VBHN` (hợp nhất Thông tư 01/2025, 63/2025, 15/2026 về cấp Giấy phép QTDND) có trong mục lục Ebook nhưng **không có tệp** trong CHM nên chưa đưa vào.
 - Văn bản hợp nhất 08, 44, 26/VBHN-NHNN và Quyết định 493/2005/QĐ-NHNN không ghi số hiệu trong nội dung; số hiệu lấy theo tên mục trong Ebook.

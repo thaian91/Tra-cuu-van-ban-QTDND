@@ -204,7 +204,8 @@
   }
   function tbTag(d) {
     var t = d.tb && catDoc(d.tb);
-    return t ? '<span class="tag warn">Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "";
+    return (d.hl ? '<span class="tag warn">Đã hết hiệu lực</span>' : "") +
+      (t ? '<span class="tag warn">Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "");
   }
   function docRow(d, showGroup) {
     return '<a class="row" href="#/vb/' + d.id + '"><div class="row-main"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
@@ -405,6 +406,9 @@
       renderDoc(meta, d, tab, anchor, q);
     }, function (e) { errorView(e.message); });
   }
+  function hlNote(meta) {
+    return meta.hl ? '<div class="callout warn"><b>Đã hết hiệu lực</b><span>Văn bản này đã hết hiệu lực.</span></div>' : "";
+  }
   function tbNote(meta) {
     var t = meta.tb && catDoc(meta.tb);
     if (!t) return "";
@@ -433,7 +437,7 @@
       '<div class="crumbs"><a href="#/">Trang chủ</a> › <a href="#/nhom/' + g.id + '">' + esc(g.ten) + '</a>' + (meta.nhom_con ? ' › ' + esc(meta.nhom_con) : '') + '</div>' +
       '<section class="dochead"><span class="tag">' + esc(meta.loai) + '</span><h1>' + esc(meta.tieu_de) + '</h1><div class="facts">' +
       (meta.so_hieu ? '<span>Số hiệu: <b>' + esc(meta.so_hieu) + '</b></span>' : '') + (meta.ngay ? '<span>Ngày ban hành: <b>' + esc(meta.ngay) + '</b></span>' : '') +
-      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + tbNote(meta) + hnNote(meta) + tabs +
+      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + hlNote(meta) + tbNote(meta) + hnNote(meta) + tabs +
       '<div class="layout"><aside class="toc" id="toc" aria-label="Mục lục">' + tocHtml + '</aside><div class="reader">' +
       '<div class="toolbar">' + (tab === "toan-van" ? '<button class="btn toc-btn" id="tocOpen" type="button">☰ Mục lục</button>' : '') +
       '<form class="search docsearch" id="docSearch" autocomplete="off"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="docQ" placeholder="Tìm trong văn bản này…" aria-label="Tìm trong văn bản này"></form>' +
