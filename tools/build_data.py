@@ -39,7 +39,12 @@ INTRO_TEXT = "Cập nhật đến tháng 08/2026"
 EXTRA_DOCS = [
     dict(file="40_2026_TT-NHNN.docx", top="Cac gioi han, ty le bao dam an toan hoat dong QTDND",
          name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
+    # Văn bản hợp nhất mới của TT 01/2014 (hợp nhất cả 12/2017, 14/2019, 19/2021, 05/2025); xếp ngay trên bản VBHN cũ.
+    dict(file="07_VBHN-NHNN.docx", top="Hoat dong An toan kho quy", before="26_VBHN",
+         name="07_VBHN-NHNN Hop nhat Thong tu so 01-2014, 12-2017, 14-2019, 19-2021 va 05-2025"),
 ]
+# Văn bản hợp nhất mới nhất của một văn bản gốc: id VBHN -> [id văn bản gốc được gắn thông báo]
+HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn"]}
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
     "Lai suat rut truoc han tien gui tai TCTD": "Lãi suất rút trước hạn tiền gửi tại TCTD",
@@ -138,7 +143,13 @@ def bold_ratio(h):
     bold = re.sub(r"\[\d+\]", "", norm(re.sub(r"<[^>]+>", "", html.unescape(bold))))
     return len(bold) / max(len(plain), 1)
 
+_VOW = "àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ"
+# Ebook có vài chữ bị tách do soạn thảo: "gi á", "M ục", "h ợp"... -> ghép lại (chỉ phụ âm đứng riêng + phần chữ có dấu theo sau)
+_SPLIT = re.compile(r"(?<![\wÀ-ỹ])([bcdđghklmnpqrstvxBCDĐGHKLMNPQRSTVX]) ([" + _VOW + r"][\wà-ỹ]*)")
+_SPLIT_FIX = (("gi á", "giá"), ("GI Á", "GIÁ"), ("n gân", "ngân"), ("ngo à i", "ngoài"))
 def tidy(t):
+    t = _SPLIT.sub(lambda m: m.group(1) + m.group(2), t)
+    for a, b in _SPLIT_FIX: t = t.replace(a, b)
     t = re.sub(r"\s+([,;])", r"\1", t)
     t = re.sub(r"\bQ uy\b", "Quy", t)
     t = re.sub(r"\bv ề\b", "về", t)
@@ -336,6 +347,7 @@ def parse_blocks(bl, flat_title=None):
         plain_raw = strip(h)
         refs = REF.findall(plain_raw)
         plain = tidy(REF.sub("", plain_raw))
+        if refs: plain = re.sub(r"(\s*,)+\s*$", "", plain)   # bỏ dấu phẩy thừa còn lại sau khi tách chú thích [n],[m]
         bold = bold_ratio(h)
         is_h = (kind == "h") or (bold > .85 and len(plain) < 300)
         in_pl = bool(cur["ch"] and cur["ch"].get("phu_luc"))
@@ -471,7 +483,8 @@ if __name__ == "__main__":
     # Văn bản bổ sung ngoài Ebook (tệp Word do người dùng cung cấp), xếp đầu nhóm.
     here = os.path.dirname(os.path.abspath(__file__))
     for x in EXTRA_DOCS:
-        pos = next((i for i, e in enumerate(ents) if e.get("top") == x["top"]), len(ents))
+        pos = next((i for i, e in enumerate(ents) if x.get("before") and e.get("name", "").startswith(x["before"])), None)
+        if pos is None: pos = next((i for i, e in enumerate(ents) if e.get("top") == x["top"]), len(ents))
         ents.insert(pos, dict(d=2, name=x["name"], local=None, top=x["top"], sub=None, docx=os.path.join(here, "sources", x["file"])))
     def base_id(name):
         tok = name.split()[0]
@@ -550,10 +563,15 @@ if __name__ == "__main__":
 
     counts = {}
     for d in docs: counts[d["nhom"]] = counts.get(d["nhom"], 0) + 1
+    by_id = {d["id"]: d for d in docs}
+    for hn, bases_ in HOP_NHAT.items():
+        for b in bases_:
+            if hn in by_id and b in by_id: by_id[b]["hn"] = hn
+            else: problems.append(f"HOP_NHAT: không tìm thấy {hn} hoặc {b}")
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat"))) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn")) for d in docs],
         gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")

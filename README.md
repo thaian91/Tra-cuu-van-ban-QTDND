@@ -4,7 +4,10 @@
 
 Nội dung lấy từ Ebook CHM “EBOOK_VANBAN_QTDND_202607”: **81 văn bản** (Luật, Nghị định, Thông tư, Văn bản hợp nhất, Quyết định và các tài liệu Nội dung mới – Hỏi đáp), chia thành 15 nhóm theo mục lục của Ebook. 11 văn bản có thêm bản **tóm tắt** do người biên soạn Ebook viết (tab “Tóm tắt”, mở mặc định cho các văn bản này).
 
-Ngoài Ebook (tổng cộng 82 văn bản), có thêm **Thông tư 40/2026/TT-NHNN** (nguồn: tệp Word do người dùng cung cấp, lưu ở `tools/sources/`), xếp đầu nhóm “Các giới hạn, tỷ lệ bảo đảm an toàn hoạt động”.
+Ngoài Ebook (tổng cộng 83 văn bản), có thêm hai văn bản từ tệp Word do người dùng cung cấp (lưu ở `tools/sources/`):
+
+- **Thông tư 40/2026/TT-NHNN**, xếp đầu nhóm “Các giới hạn, tỷ lệ bảo đảm an toàn hoạt động”.
+- **Văn bản hợp nhất 07/VBHN-NHNN** (hợp nhất Thông tư 01/2014, 12/2017, 14/2019, 19/2021, 05/2025), xếp trong nhóm “Hoạt động an toàn kho quỹ”; trang Thông tư 01/2014 có thông báo trỏ tới bản hợp nhất này.
 
 ## Chạy
 
