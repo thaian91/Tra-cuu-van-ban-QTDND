@@ -46,6 +46,13 @@ EXTRA_DOCS = [
 # Văn bản hợp nhất mới nhất của một văn bản gốc: id VBHN -> [id văn bản gốc được gắn thông báo]
 HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-nhnn"]}
 # Văn bản được thay thế bởi văn bản khác: id bị thay thế -> id văn bản thay thế (theo xác nhận của người dùng)
+# Phần (khoản/điểm) của văn bản đã hết hiệu lực: đánh dấu các đoạn từ `bat_dau` đến trước `ket_thuc` trong Điều `dieu` (theo xác nhận của người dùng).
+HET_HIEU_LUC_MOT_PHAN = [
+    dict(doc="06-2023-tt-nhnn", dieu="dieu-1", bat_dau=r"^5\. Sửa đổi, bổ sung khoản 4 Điều 18", ket_thuc=r"^6\. ",
+         nhan="Khoản 5 Điều 1",
+         ghi_chu="Bị bãi bỏ bởi điểm a khoản 2 Điều 9 Thông tư 29/2026/TT-NHNN (có hiệu lực từ ngày 15/8/2026)",
+         boi="29-2026-tt-nhnn", boi_dieu="dieu-9"),
+]
 # Văn bản đã hết hiệu lực (theo xác nhận của người dùng)
 HET_HIEU_LUC = ["493-2005-qd-nhnn", "18-2007-qd-nhnn", "21-2019-tt-nhnn", "04-2015-tt-nhnn", "08-vbhn-nhnn"]
 THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn"}
@@ -169,6 +176,8 @@ def sentence_case(t):
     s = re.sub(r"\b\d+(?:/\d+)?/[\wđ\-]+", lambda m: m.group(0).upper(), s)
     s = re.sub(r"\b(" + "|".join(UPPER_WORDS) + r")\b", lambda m: m.group(1).upper(), s)
     s = re.sub(r"\bqh\d+\b", lambda m: m.group(0).upper(), s)
+    s = re.sub(r"\bngân hàng nhà nước việt nam\b", "Ngân hàng Nhà nước Việt Nam", s)
+    s = re.sub(r"\bthống đốc\b", "Thống đốc", s)
     s = re.sub(r"\bluật\b", "Luật", s)
     s = re.sub(r"\b(thông tư|nghị định|quyết định)\b(?= số)", lambda m: m.group(1).capitalize(), s)
     return s[:1].upper() + s[1:]
@@ -542,6 +551,16 @@ if __name__ == "__main__":
                    can_cu=cc, lich_su=ls, dong_thoi_gian=timeline(ls), chuong=chapters, chu_thich=meta["chu_thich"])
         sp = summaries.pop(base_id(e["name"]), None)
         if sp: doc["tom_tat"] = parse_summary(sp)
+        for x in HET_HIEU_LUC_MOT_PHAN:
+            if x["doc"] != did: continue
+            art = next((a for c in doc["chuong"] for a in c["articles"] if a["id"] == x["dieu"]), None)
+            st = next((i for i, b in enumerate(art["nd"]) if art and re.search(x["bat_dau"], strip(b[1]))), None) if art else None
+            if st is None:
+                problems.append(f"HET_HIEU_LUC_MOT_PHAN: không tìm thấy đoạn bắt đầu của {x['nhan']} trong {did}"); continue
+            en = next((i for i in range(st + 1, len(art["nd"])) if re.search(x["ket_thuc"], strip(art["nd"][i][1]))), len(art["nd"]))
+            lst = doc.setdefault("het_mot_phan", [])
+            for b in art["nd"][st:en]: b.append(len(lst))      # phần tử thứ 4: chỉ số mục trong het_mot_phan
+            lst.append(dict(id=x["dieu"], nhan=x["nhan"], ghi_chu=x["ghi_chu"], boi=x["boi"], boi_dieu=x["boi_dieu"], so_doan=en - st))
         docs.append(doc)
         idx = len(docs) - 1
         if sp:
@@ -581,7 +600,7 @@ if __name__ == "__main__":
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl"))) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl")), hm=bool(d.get("het_mot_phan"))) for d in docs],
         gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")

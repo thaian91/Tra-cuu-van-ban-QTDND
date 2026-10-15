@@ -204,7 +204,7 @@
   }
   function tbTag(d) {
     var t = d.tb && catDoc(d.tb);
-    return (d.hl ? '<span class="tag warn">Đã hết hiệu lực</span>' : "") +
+    return (d.hl ? '<span class="tag warn">Đã hết hiệu lực</span>' : "") + (d.hm ? '<span class="tag warn">Hết hiệu lực một phần</span>' : "") +
       (t ? '<span class="tag warn">Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "");
   }
   function docRow(d, showGroup) {
@@ -347,6 +347,30 @@
     return '<p' + (cls ? ' class="' + cls + '"' : '') + '>' + withFn(b[1], notes) + '</p>';
   }
   var COPY_BTN = function (id) { return '<button class="copy" type="button" data-copy="' + id + '" title="Sao chép liên kết tới mục này">Sao chép liên kết</button>'; };
+  // Đoạn đã hết hiệu lực (phần tử thứ 4 của khối = chỉ số trong d.het_mot_phan): gom thành một khung đánh dấu
+  function renderBlocks(d, list, notes) {
+    var out = "", cur = null;
+    list.forEach(function (b) {
+      var k = b.length > 3 ? b[3] : null;
+      if (k !== cur) {
+        if (cur !== null) out += "</div>";
+        if (k !== null) {
+          var x = d.het_mot_phan[k], tgt = catDoc(x.boi);
+          out += '<div class="hh"><div class="hh-h"><span class="tag warn">Đã hết hiệu lực</span><span>' + esc(x.nhan) + ' — ' + esc(x.ghi_chu) + '</span>' +
+            (tgt ? '<a href="#/vb/' + tgt.id + '/' + esc(x.boi_dieu) + '">Xem ' + esc(tgt.so_hieu || tgt.tieu_de) + ' →</a>' : '') + '</div>';
+        }
+        cur = k;
+      }
+      out += block(b, notes);
+    });
+    return out + (cur !== null ? "</div>" : "");
+  }
+  function phNote(d) {
+    return (d.het_mot_phan || []).map(function (x) {
+      return '<a class="callout warn" href="#/vb/' + d.id + '/' + esc(x.id) + '"><b>Một phần văn bản đã hết hiệu lực</b><span>' + esc(x.nhan) + ': ' + esc(x.ghi_chu) +
+        '</span><span class="go">Xem đoạn đã hết hiệu lực →</span></a>';
+    }).join("");
+  }
   function renderFull(d) {
     var notes = d.chu_thich || {}, h = "";
     if (d.can_cu.length) h += '<details class="cancu"><summary>Căn cứ ban hành</summary><div>' + d.can_cu.map(function (b) { return block(b, notes); }).join("") + '</div></details>';
@@ -360,7 +384,7 @@
         if (a.so) h += '<h3><span class="dieu-no">Điều ' + esc(a.so) + '</span><span class="dieu-ten">' + esc(a.ten) +
           (a.fn ? a.fn.map(function (n) { return notes[n] ? withFn("[" + n + "]", notes) : ""; }).join("") : "") + '</span>' + COPY_BTN(a.id) + '</h3>';
         else if (a.ten) h += '<h3><span class="dieu-ten">' + esc(a.ten) + '</span>' + COPY_BTN(a.id) + '</h3>';
-        h += a.nd.map(function (b) { return block(b, notes); }).join("") + '</article>';
+        h += renderBlocks(d, a.nd, notes) + '</article>';
       });
       h += '</section>';
     });
@@ -437,7 +461,7 @@
       '<div class="crumbs"><a href="#/">Trang chủ</a> › <a href="#/nhom/' + g.id + '">' + esc(g.ten) + '</a>' + (meta.nhom_con ? ' › ' + esc(meta.nhom_con) : '') + '</div>' +
       '<section class="dochead"><span class="tag">' + esc(meta.loai) + '</span><h1>' + esc(meta.tieu_de) + '</h1><div class="facts">' +
       (meta.so_hieu ? '<span>Số hiệu: <b>' + esc(meta.so_hieu) + '</b></span>' : '') + (meta.ngay ? '<span>Ngày ban hành: <b>' + esc(meta.ngay) + '</b></span>' : '') +
-      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + hlNote(meta) + tbNote(meta) + hnNote(meta) + tabs +
+      '<span>Nhóm: <b>' + esc(g.ten) + '</b></span></div></section>' + hlNote(meta) + phNote(d) + tbNote(meta) + hnNote(meta) + tabs +
       '<div class="layout"><aside class="toc" id="toc" aria-label="Mục lục">' + tocHtml + '</aside><div class="reader">' +
       '<div class="toolbar">' + (tab === "toan-van" ? '<button class="btn toc-btn" id="tocOpen" type="button">☰ Mục lục</button>' : '') +
       '<form class="search docsearch" id="docSearch" autocomplete="off"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="docQ" placeholder="Tìm trong văn bản này…" aria-label="Tìm trong văn bản này"></form>' +

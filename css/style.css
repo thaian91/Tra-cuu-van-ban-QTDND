@@ -159,6 +159,11 @@ main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 56px; outline: none
 .tag.warn { background: color-mix(in srgb, #dc2626 14%, transparent); color: #b91c1c; }
 :root[data-theme="dark"] .tag.warn { color: #fca5a5; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.warn { color: #fca5a5; } }
+.hh { margin: .6em 0 1.1em; padding: .5em 1em .3em; border-left: 4px solid #dc2626; border-radius: 10px; background: color-mix(in srgb, #dc2626 7%, transparent); }
+.hh-h { display: flex; flex-wrap: wrap; gap: .4em .8em; align-items: center; margin-bottom: .4em; font-size: .78em; line-height: 1.5; color: var(--ink-2); }
+.hh-h a { font-weight: 600; color: #b91c1c; }
+:root[data-theme="dark"] .hh-h a { color: #fca5a5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hh-h a { color: #fca5a5; } }
 .callout:hover { border-color: var(--accent); }
 .callout span { color: var(--ink-2); font-size: 14px; }
 .callout .go { color: var(--accent); font-weight: 700; margin-top: 4px; }
