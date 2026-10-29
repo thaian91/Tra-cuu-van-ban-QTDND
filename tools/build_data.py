@@ -55,7 +55,9 @@ HET_HIEU_LUC_MOT_PHAN = [
 ]
 # Văn bản đã hết hiệu lực (theo xác nhận của người dùng)
 HET_HIEU_LUC = ["493-2005-qd-nhnn", "18-2007-qd-nhnn", "21-2019-tt-nhnn", "04-2015-tt-nhnn", "08-vbhn-nhnn"]
-THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn"}
+THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn", "13-2024-tt-nhnn": "40-2026-tt-nhnn"}
+# Văn bản có ngày hết hiệu lực xác định (hiển thị "Hết hiệu lực từ ngày ...")
+HET_HIEU_LUC_TU = {"13-2024-tt-nhnn": "31/10/2026"}
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
     "Lai suat rut truoc han tien gui tai TCTD": "Lãi suất rút trước hạn tiền gửi tại TCTD",
@@ -597,10 +599,13 @@ if __name__ == "__main__":
     for hid in HET_HIEU_LUC:
         if hid in by_id: by_id[hid]["hl"] = True
         else: problems.append(f"HET_HIEU_LUC: không tìm thấy {hid}")
+    for hid, ngay in HET_HIEU_LUC_TU.items():
+        if hid in by_id: by_id[hid]["hd"] = ngay
+        else: problems.append(f"HET_HIEU_LUC_TU: không tìm thấy {hid}")
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl")), hm=bool(d.get("het_mot_phan"))) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl")), hd=d.get("hd"), hm=bool(d.get("het_mot_phan"))) for d in docs],
         gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")

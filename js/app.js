@@ -204,8 +204,8 @@
   }
   function tbTag(d) {
     var t = d.tb && catDoc(d.tb);
-    return (d.hl ? '<span class="tag warn">Đã hết hiệu lực</span>' : "") + (d.hm ? '<span class="tag warn">Hết hiệu lực một phần</span>' : "") +
-      (t ? '<span class="tag warn">Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "");
+    return (d.hl ? '<span class="tag warn">Đã hết hiệu lực</span>' : "") + (d.hd ? '<span class="tag warn">Hết hiệu lực từ ngày ' + esc(d.hd) + '</span>' : "") + (d.hm ? '<span class="tag warn">Hết hiệu lực một phần</span>' : "") +
+      (t ? '<span class="tag warn">' + (d.hd ? 'Được' : 'Đã được') + ' thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</span>' : "");
   }
   function docRow(d, showGroup) {
     return '<a class="row" href="#/vb/' + d.id + '"><div class="row-main"><div class="dmeta"><span class="tag">' + esc(d.loai) + '</span>' +
@@ -431,13 +431,14 @@
     }, function (e) { errorView(e.message); });
   }
   function hlNote(meta) {
+    if (meta.hd) return '<div class="callout warn"><b>Hết hiệu lực từ ngày ' + esc(meta.hd) + '</b><span>Văn bản này hết hiệu lực từ ngày ' + esc(meta.hd) + '.</span></div>';
     return meta.hl ? '<div class="callout warn"><b>Đã hết hiệu lực</b><span>Văn bản này đã hết hiệu lực.</span></div>' : "";
   }
   function tbNote(meta) {
     var t = meta.tb && catDoc(meta.tb);
     if (!t) return "";
-    return '<a class="callout warn" href="#/vb/' + t.id + '"><b>Đã được thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</b><span>' + esc(docName(t)) + (t.ngay ? ' · ' + esc(t.ngay) : '') +
-      ' — văn bản này đã được thay thế, nên đọc văn bản mới</span><span class="go">Xem ' + esc(t.so_hieu || "văn bản thay thế") + ' →</span></a>';
+    return '<a class="callout warn" href="#/vb/' + t.id + '"><b>' + (meta.hd ? 'Được' : 'Đã được') + ' thay thế bởi ' + esc(t.so_hieu || t.tieu_de) + '</b><span>' + esc(docName(t)) + (t.ngay ? ' · ' + esc(t.ngay) : '') +
+      (meta.hd ? ' — văn bản mới có hiệu lực từ ngày 01/11/2026, nên đọc văn bản mới' : ' — văn bản này đã được thay thế, nên đọc văn bản mới') + '</span><span class="go">Xem ' + esc(t.so_hieu || "văn bản thay thế") + ' →</span></a>';
   }
   function hnNote(meta) {
     var h = meta.hn && catDoc(meta.hn);
