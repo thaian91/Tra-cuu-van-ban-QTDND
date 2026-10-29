@@ -55,9 +55,9 @@ HET_HIEU_LUC_MOT_PHAN = [
 ]
 # Văn bản đã hết hiệu lực (theo xác nhận của người dùng)
 HET_HIEU_LUC = ["493-2005-qd-nhnn", "18-2007-qd-nhnn", "21-2019-tt-nhnn", "04-2015-tt-nhnn", "08-vbhn-nhnn"]
-THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn", "13-2024-tt-nhnn": "40-2026-tt-nhnn"}
+THAY_THE = {"26-vbhn-nhnn": "07-vbhn-nhnn", "493-2005-qd-nhnn": "36-2024-tt-nhnn", "13-2024-tt-nhnn": "40-2026-tt-nhnn", "32-2015-tt-nhnn": "40-2026-tt-nhnn"}
 # Văn bản có ngày hết hiệu lực xác định (hiển thị "Hết hiệu lực từ ngày ...")
-HET_HIEU_LUC_TU = {"13-2024-tt-nhnn": "31/10/2026"}
+HET_HIEU_LUC_TU = {"13-2024-tt-nhnn": "31/10/2026", "32-2015-tt-nhnn": "31/10/2026"}
 SUBGROUPS = {
     "Quy dinh ve Lai suat tien gui bang VND": "Quy định về lãi suất tiền gửi bằng VND",
     "Lai suat rut truoc han tien gui tai TCTD": "Lãi suất rút trước hạn tiền gửi tại TCTD",
