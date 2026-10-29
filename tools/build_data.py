@@ -39,6 +39,8 @@ INTRO_TEXT = "Cập nhật đến tháng 08/2026"
 EXTRA_DOCS = [
     dict(file="40_2026_TT-NHNN.docx", top="Cac gioi han, ty le bao dam an toan hoat dong QTDND",
          name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
+    dict(file="55_2026_TT-NHNN.docx", top="He thong thong tin - Bao cao thong ke",
+         name="55_2026_TT-NHNN Sua doi, bo sung mot so dieu cua Thong tu so 18-2025-TT-NHNN"),
     # Văn bản hợp nhất mới của TT 01/2014 (hợp nhất cả 12/2017, 14/2019, 19/2021, 05/2025); xếp ngay trên bản VBHN cũ.
     dict(file="07_VBHN-NHNN.docx", top="Hoat dong An toan kho quy", before="26_VBHN",
          name="07_VBHN-NHNN Hop nhat Thong tu so 01-2014, 12-2017, 14-2019, 19-2021 va 05-2025"),
