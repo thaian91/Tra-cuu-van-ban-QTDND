@@ -41,15 +41,19 @@ EXTRA_DOCS = [
          name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
     dict(file="55_2026_TT-NHNN.docx", top="He thong thong tin - Bao cao thong ke",
          name="55_2026_TT-NHNN Sua doi, bo sung mot so dieu cua Thong tu so 18-2025-TT-NHNN"),
+    # VBHN hợp nhất TT 18/2025 và TT 55/2026
+    dict(file="116_2026_VBHN-NHNN.docx", top="He thong thong tin - Bao cao thong ke", before="18_2025",
+         name="116_2026_VBHN-NHNN Hop nhat Thong tu so 18-2025 va 55-2026"),
     dict(file="23_2026_QH16.docx", top="Luat", name="23_2026_QH16 Sua doi, bo sung mot so dieu cua Luat Ngan hang Nha nuoc Viet Nam, Luat Phong, chong rua tien va Luat cac to chuc tin dung"),
     # Văn bản hợp nhất mới của TT 01/2014 (hợp nhất cả 12/2017, 14/2019, 19/2021, 05/2025); xếp ngay trên bản VBHN cũ.
     dict(file="07_VBHN-NHNN.docx", top="Hoat dong An toan kho quy", before="26_VBHN",
          name="07_VBHN-NHNN Hop nhat Thong tu so 01-2014, 12-2017, 14-2019, 19-2021 va 05-2025"),
 ]
 # Văn bản hợp nhất mới nhất của một văn bản gốc: id VBHN -> [id văn bản gốc được gắn thông báo]
-HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-nhnn"]}
+HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-nhnn"],
+            "116-2026-vbhn-nhnn": ["18-2025-tt-nhnn", "55-2026-tt-nhnn"]}
 # Văn bản đã có văn bản sửa đổi, bổ sung: id văn bản gốc -> [id văn bản sửa đổi] (theo xác nhận của người dùng)
-SUA_DOI = {"18-2025-tt-nhnn": ["55-2026-tt-nhnn"]}
+SUA_DOI = {"18-2025-tt-nhnn": ["55-2026-tt-nhnn"], "32-2024-qh15": ["23-2026-qh16"]}
 # Văn bản được thay thế bởi văn bản khác: id bị thay thế -> id văn bản thay thế (theo xác nhận của người dùng)
 # Phần (khoản/điểm) của văn bản đã hết hiệu lực: đánh dấu các đoạn từ `bat_dau` đến trước `ket_thuc` trong Điều `dieu` (theo xác nhận của người dùng).
 HET_HIEU_LUC_MOT_PHAN = [
@@ -604,6 +608,10 @@ if __name__ == "__main__":
     for hid in HET_HIEU_LUC:
         if hid in by_id: by_id[hid]["hl"] = True
         else: problems.append(f"HET_HIEU_LUC: không tìm thấy {hid}")
+    for d in docs:      # Luật không ghi ngày ban hành ở đầu văn bản: lấy ngày Quốc hội thông qua
+        if d["loai"] == "Luật" and not d["ngay"]:
+            m = re.findall(r"thông qua ngày\s*(\d{1,2})\s*tháng\s*(\d{1,2})\s*năm\s*(\d{4})", json.dumps(d["chuong"], ensure_ascii=False))
+            if m: d["ngay"] = f"{int(m[-1][0]):02d}/{int(m[-1][1]):02d}/{m[-1][2]}"
     for base, amds in SUA_DOI.items():
         if base in by_id and all(a in by_id for a in amds): by_id[base]["sd"] = amds
         else: problems.append(f"SUA_DOI: không tìm thấy {base} hoặc {amds}")

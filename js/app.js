@@ -449,7 +449,7 @@
   function sdNote(meta) {
     return (meta.sd || []).map(function (id) {
       var a = catDoc(id); if (!a) return "";
-      return '<a class="callout" href="#/vb/' + a.id + '"><b>Đã có thông tư sửa đổi, bổ sung</b><span>' + esc(docName(a)) + (a.ngay ? ' · ' + esc(a.ngay) : '') +
+      return '<a class="callout" href="#/vb/' + a.id + '"><b>Đã có ' + esc((a.loai || 'văn bản').toLowerCase()) + ' sửa đổi, bổ sung</b><span>' + esc(docName(a)) + (a.ngay ? ' · ' + esc(a.ngay) : '') +
         ' — nên đọc cùng văn bản sửa đổi, bổ sung</span><span class="go">Xem ' + esc(a.so_hieu || "văn bản sửa đổi") + ' →</span></a>';
     }).join("");
   }
