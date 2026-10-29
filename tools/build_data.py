@@ -34,19 +34,22 @@ GROUPS = [
     ("khac", "Văn bản khác", "Van ban KHAC"),
 ]
 # Dòng giới thiệu ở trang chủ (thay cho đoạn giới thiệu gốc của Ebook theo yêu cầu).
-INTRO_TEXT = "Cập nhật đến tháng 08/2026"
+INTRO_TEXT = "Cập nhật đến tháng 10/2026"
 
 EXTRA_DOCS = [
     dict(file="40_2026_TT-NHNN.docx", top="Cac gioi han, ty le bao dam an toan hoat dong QTDND",
          name="40_2026_TT-NHNN Quy dinh cac Gioi han, Ty le bao dam an toan QTDND"),
     dict(file="55_2026_TT-NHNN.docx", top="He thong thong tin - Bao cao thong ke",
          name="55_2026_TT-NHNN Sua doi, bo sung mot so dieu cua Thong tu so 18-2025-TT-NHNN"),
+    dict(file="23_2026_QH16.docx", top="Luat", name="23_2026_QH16 Sua doi, bo sung mot so dieu cua Luat Ngan hang Nha nuoc Viet Nam, Luat Phong, chong rua tien va Luat cac to chuc tin dung"),
     # Văn bản hợp nhất mới của TT 01/2014 (hợp nhất cả 12/2017, 14/2019, 19/2021, 05/2025); xếp ngay trên bản VBHN cũ.
     dict(file="07_VBHN-NHNN.docx", top="Hoat dong An toan kho quy", before="26_VBHN",
          name="07_VBHN-NHNN Hop nhat Thong tu so 01-2014, 12-2017, 14-2019, 19-2021 va 05-2025"),
 ]
 # Văn bản hợp nhất mới nhất của một văn bản gốc: id VBHN -> [id văn bản gốc được gắn thông báo]
 HOP_NHAT = {"07-vbhn-nhnn": ["01-2014-tt-nhnn", "12-2017-tt-nhnn", "19-2021-tt-nhnn"]}
+# Văn bản đã có văn bản sửa đổi, bổ sung: id văn bản gốc -> [id văn bản sửa đổi] (theo xác nhận của người dùng)
+SUA_DOI = {"18-2025-tt-nhnn": ["55-2026-tt-nhnn"]}
 # Văn bản được thay thế bởi văn bản khác: id bị thay thế -> id văn bản thay thế (theo xác nhận của người dùng)
 # Phần (khoản/điểm) của văn bản đã hết hiệu lực: đánh dấu các đoạn từ `bat_dau` đến trước `ket_thuc` trong Điều `dieu` (theo xác nhận của người dùng).
 HET_HIEU_LUC_MOT_PHAN = [
@@ -601,13 +604,16 @@ if __name__ == "__main__":
     for hid in HET_HIEU_LUC:
         if hid in by_id: by_id[hid]["hl"] = True
         else: problems.append(f"HET_HIEU_LUC: không tìm thấy {hid}")
+    for base, amds in SUA_DOI.items():
+        if base in by_id and all(a in by_id for a in amds): by_id[base]["sd"] = amds
+        else: problems.append(f"SUA_DOI: không tìm thấy {base} hoặc {amds}")
     for hid, ngay in HET_HIEU_LUC_TU.items():
         if hid in by_id: by_id[hid]["hd"] = ngay
         else: problems.append(f"HET_HIEU_LUC_TU: không tìm thấy {hid}")
     catalog = dict(
         groups=[dict(id=i, ten=ten, n=counts.get(i, 0)) for i, ten, _ in GROUPS],
         docs=[dict(id=d["id"], nhom=d["nhom"], nhom_con=d["nhom_con"], loai=d["loai"], so_hieu=d["so_hieu"], ngay=d["ngay"], tieu_de=d["tieu_de"],
-                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl")), hd=d.get("hd"), hm=bool(d.get("het_mot_phan"))) for d in docs],
+                   n=sum(1 for c in d["chuong"] for a in c["articles"] if a.get("so")), ls=bool(d["dong_thoi_gian"]), tt=bool(d.get("tom_tat")), hn=d.get("hn"), tb=d.get("tb"), hl=bool(d.get("hl")), hd=d.get("hd"), sd=d.get("sd"), hm=bool(d.get("het_mot_phan"))) for d in docs],
         gioi_thieu=["", INTRO_TEXT])
     open(os.path.join(OUT, "catalog.js"), "w", encoding="utf-8").write("window.CATALOG=" + js(catalog) + ";\n")
     open(os.path.join(OUT, "search.js"), "w", encoding="utf-8").write("window.SEARCH_INDEX=" + js(search) + ";\n")
